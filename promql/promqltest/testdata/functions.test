@@ -1827,6 +1827,35 @@ eval instant at 0m days_in_month(vector(1454284800))
 eval instant at 0m days_in_month(vector(1485907200))
   {} 28
 
+# Negative fractional Unix timestamps are still in the previous second.
+eval instant at 0m year(vector(-0.5))
+  {} 1969
+
+eval instant at 0m month(vector(-0.5))
+  {} 12
+
+eval instant at 0m day_of_month(vector(-0.5))
+  {} 31
+
+eval instant at 0m day_of_year(vector(-0.5))
+  {} 365
+
+eval instant at 0m day_of_week(vector(-0.5))
+  {} 3
+
+eval instant at 0m days_in_month(vector(-0.5))
+  {} 31
+
+eval instant at 0m hour(vector(-0.5))
+  {} 23
+
+eval instant at 0m minute(vector(-0.5))
+  {} 59
+
+# Positive fractional Unix timestamps remain in the current second.
+eval instant at 0m day_of_month(vector(0.5))
+  {} 1
+
 # Test for histograms.
 eval instant at 0m day_of_month(histogram_sample)
 

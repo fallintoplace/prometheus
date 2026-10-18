@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"math"
 	"testing"
+	"time"
 
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
@@ -27,6 +28,26 @@ import (
 	"github.com/prometheus/prometheus/util/annotations"
 	"github.com/prometheus/prometheus/util/kahansum"
 )
+
+func TestDateWrapperBeforeEpoch(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		ts   int64
+		want float64
+	}{
+		{name: "negative fractional second", ts: -1, want: 1969},
+		{name: "epoch", ts: 0, want: 1970},
+		{name: "positive fractional second", ts: 1, want: 1970},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			got := dateWrapper(nil, &EvalNodeHelper{Ts: tc.ts}, func(ts time.Time) float64 {
+				return float64(ts.Year())
+			})
+			require.Len(t, got, 1)
+			require.Equal(t, tc.want, got[0].F)
+		})
+	}
+}
 
 func TestHistogramRateCounterResetHint(t *testing.T) {
 	points := []HPoint{
