@@ -937,6 +937,13 @@ eval instant at 8000s double_exponential_smoothing(http_requests[1m], 0.01, 0.1)
 	{job="api-server", instance="0", group="canary"} 24000
 	{job="api-server", instance="1", group="canary"} 32000
 
+# NaN is outside the valid range for both smoothing parameters.
+eval instant at 8000s double_exponential_smoothing(http_requests[1m], NaN, 0.1)
+	expect fail msg: invalid smoothing factor
+
+eval instant at 8000s double_exponential_smoothing(http_requests[1m], 0.01, NaN)
+	expect fail msg: invalid trend factor
+
 # double_exponential_smoothing should ignore histograms in a mixed range of floats and histograms, flagged by an info annotation.
 eval instant at 20010s double_exponential_smoothing(http_requests_mix[1m], 0.01, 0.1)
 	expect info

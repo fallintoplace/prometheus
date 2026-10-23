@@ -1195,10 +1195,10 @@ func funcDoubleExponentialSmoothing(vectorVals []Vector, matrixVal Matrix, args 
 	tf := vectorVals[1][0].F
 
 	// Check that the input parameters are valid.
-	if sf <= 0 || sf >= 1 {
+	if !(sf > 0 && sf < 1) {
 		panic(fmt.Errorf("invalid smoothing factor. Expected: 0 < sf < 1, got: %f", sf))
 	}
-	if tf <= 0 || tf >= 1 {
+	if !(tf > 0 && tf < 1) {
 		panic(fmt.Errorf("invalid trend factor. Expected: 0 < tf < 1, got: %f", tf))
 	}
 
