@@ -176,3 +176,68 @@ func TestInterpolateHistograms(t *testing.T) {
 		})
 	}
 }
+
+func TestHistogramVarianceLargeBucketBounds(t *testing.T) {
+	customLower := math.Ldexp(1, 1023)
+	customUpper := math.Ldexp(1.5, 1023)
+	exponentialLower := math.Ldexp(1, 799)
+	exponentialUpper := math.Ldexp(1, 800)
+	exponentialMidpoint := math.Sqrt(exponentialLower) * math.Sqrt(exponentialUpper)
+
+	testCases := []struct {
+		name string
+		hist *histogram.FloatHistogram
+	}{
+		{
+			name: "custom",
+			hist: &histogram.FloatHistogram{
+				Schema:          histogram.CustomBucketsSchema,
+				Count:           1,
+				Sum:             math.Ldexp(1.25, 1023),
+				CustomValues:    []float64{customLower, customUpper},
+				PositiveSpans:   []histogram.Span{{Offset: 1, Length: 1}},
+				PositiveBuckets: []float64{1},
+			},
+		},
+		{
+			name: "exponential-positive",
+			hist: &histogram.FloatHistogram{
+				Schema:          0,
+				Count:           1,
+				Sum:             exponentialMidpoint,
+				PositiveSpans:   []histogram.Span{{Offset: 800, Length: 1}},
+				PositiveBuckets: []float64{1},
+			},
+		},
+		{
+			name: "exponential-negative",
+			hist: &histogram.FloatHistogram{
+				Schema:          0,
+				Count:           1,
+				Sum:             -exponentialMidpoint,
+				NegativeSpans:   []histogram.Span{{Offset: 800, Length: 1}},
+				NegativeBuckets: []float64{1},
+			},
+		},
+	}
+	functions := []struct {
+		name string
+		call FunctionCall
+	}{
+		{"histogram_stdvar", funcHistogramStdVar},
+		{"histogram_stddev", funcHistogramStdDev},
+	}
+
+	for _, tc := range testCases {
+		require.NoError(t, tc.hist.Validate())
+		for _, fn := range functions {
+			t.Run(tc.name+"/"+fn.name, func(t *testing.T) {
+				input := []Vector{{{Metric: labels.FromStrings("__name__", "h"), H: tc.hist}}}
+				result, _ := fn.call(input, nil, nil, &EvalNodeHelper{})
+				require.Len(t, result, 1)
+				require.Zero(t, result[0].F)
+			})
+		}
+	}
+}
+

@@ -2451,12 +2451,18 @@ func histogramVariance(vectorVals []Vector, enh *EvalNodeHelper, varianceToResul
 			case h.UsesCustomBuckets():
 				// Use arithmetic mean in case of custom buckets.
 				val = (bucket.Upper + bucket.Lower) / 2.0
+				if math.IsInf(val, 0) {
+					val = bucket.Lower/2 + bucket.Upper/2
+				}
 			case bucket.Lower <= 0 && bucket.Upper >= 0:
 				// Use zero (effectively the arithmetic mean) in the zero bucket of a standard exponential histogram.
 				val = 0
 			default:
 				// Use geometric mean in case of standard exponential buckets.
 				val = math.Sqrt(bucket.Upper * bucket.Lower)
+				if math.IsInf(val, 0) {
+					val = math.Sqrt(math.Abs(bucket.Upper)) * math.Sqrt(math.Abs(bucket.Lower))
+				}
 				if bucket.Upper < 0 {
 					val = -val
 				}
